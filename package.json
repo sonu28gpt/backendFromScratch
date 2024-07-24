@@ -1,0 +1,16 @@
+{
+  "name": "backendfromscratch",
+  "version": "1.0.0",
+  "description": "learning backend",
+  "main": "index.js",
+  "type":"module",
+  "scripts": {
+    "dev":"nodemon src/index.js"
+  },
+  "author": "sonu gupta",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "prettier": "^3.3.3"
+  }
+}
