@@ -4,6 +4,22 @@ dotenv.config({
     path:'/.env'
 });// change dev script
 import { connectDB } from './db/index.js';
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+const app=express();
+
+
+app.use(cors(
+    {
+        origin:process.env.CORS_ORIGIN,
+        credentials:true
+    }
+))
+app.use(express.json());
+app.use(express.urlencoded({extended:true}))
+app.use(cookieParser());
+app.use(express.static('public'));
 
 
 
@@ -11,7 +27,6 @@ import { connectDB } from './db/index.js';
 
 
 
-connectDB();
 
 
 
@@ -20,9 +35,12 @@ connectDB();
 
 
 
-
-
-
+connectDB()
+.then(()=>{
+    app.listen(process.env.PORT||8080,(req,res)=>{
+        console.log("server listening",process.env.PORT);
+    })  
+})
 
 
 
