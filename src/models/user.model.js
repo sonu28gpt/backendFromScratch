@@ -31,7 +31,7 @@ const userSchema=new mongoose.Schema({
     },
     coverImage:{
         type:String,//cloudinary string
-        required:true
+        // required:true
     },
     watchHistory:[{
         type:mongoose.Schema.Types.ObjectId,
