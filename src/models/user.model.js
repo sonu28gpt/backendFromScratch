@@ -67,7 +67,7 @@ userSchema.methods.generateAcceesToken=function(){//this token generation is fas
         emai:this.email,
         fullName:this.fullName
     },
-    process.env.GENERATE_ACCESS_TOKEN,
+    process.env.ACCESS_TOKEN_SECRET,
     {
         expiresIn:process.env.ACCESS_TOKEN_EXPIRY
     })
@@ -77,7 +77,7 @@ userSchema.methods.generateRefreshToken=function(){
         _id:this._id
        
     },
-    process.env.GENERATE_REFRESH_TOKEN,
+    process.env.REFRESH_TOKEN_SECRET,
     {
         expiresIn:process.env.REFRESH_TOKEN_EXPIRY//generally it is greater than access token expiry
     })

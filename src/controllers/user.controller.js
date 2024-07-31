@@ -3,7 +3,17 @@ import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import fs from 'fs';
 
+
+const generateAccessAndRefreshToken=async(userId)=>{
+        const user=await User.findById(userId);
+        const accessToken=user.generateAcceesToken();
+        const refreshToken=user.generateRefreshToken();
+        user.refreshToken=refreshToken;
+        user.save({validateBeforeSave:false});
+        return {accessToken,refreshToken};
+}
 
 
 export const userRegister=asyncHandler(async(req,res)=>{
@@ -19,12 +29,24 @@ export const userRegister=asyncHandler(async(req,res)=>{
     const {userName="",email="",fullName="",password=""}=req.body;
     if([userName,email,fullName,password].some((field)=>field?.trim()==="")){
         // console.log(req.body);
+        if(req.files?.avatar){
+            fs.unlinkSync(req.files?.avatar[0]?.path);
+        }
+        if(req.files?.coverImage){
+            fs.unwatchFile(req.files?.coverImage[0]?.path);
+        }
         throw new ApiError(400,"all fields are required");
     }
     const existedUser= await User.findOne({
         $or:[{email},{userName}]
     });
     if(existedUser){
+        if(req.files?.avatar){
+            fs.unlinkSync(req.files?.avatar[0]?.path);
+        }
+        if(req.files?.coverImage){
+            fs.unwatchFile(req.files?.coverImage[0]?.path);
+        }
         throw new ApiError(409,"user already existed");
     }
     
@@ -72,3 +94,78 @@ export const userRegister=asyncHandler(async(req,res)=>{
         new ApiResponse(200,createdUser,"user created successfully")
     )
 })
+
+
+export const userLogin=asyncHandler(async(req,res)=>{
+    //data destructing and check data present or not
+    //check with the data user exit or not
+    //check password is correct or not
+    //assign access and refresh token
+    //set cookies and send user data
+    const {email="",userName="",password=""}=req.body;
+    // console.log(req.body);
+    if(!email && !userName){
+        throw new ApiError(400,"please provide username or email");
+    }
+    const user=await User.findOne({
+        $or:[{email},{userName}]
+    });
+    if(!user){
+        throw new ApiError(404,"user not found");
+    }
+
+    const isPasswordValid=await user.isPasswordCorrect(password);
+    if(!isPasswordValid){
+        throw new ApiError(401,"please enter correct password");
+    }
+    const {accessToken,refreshToken}=await generateAccessAndRefreshToken(user._id);
+
+    const loggedInUser=await User.findById(user._id).select(" -password -refreshToken ");
+    
+    const options={//using options in cookies so that it can only change from server side
+        httpOnly:true,
+        secure:true
+    }
+    return res
+    .status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(
+        new ApiResponse(200,
+            {
+                user:loggedInUser,
+                refreshToken,
+                accessToken
+            },
+            "user Logged IN successfully"
+        )
+    );
+
+});
+
+
+export const userLogout=asyncHandler(async(req,res)=>{
+    //from auth middleware we get the details of user;
+    //unset the value of refreshToken in user db
+    //clear cookie from res
+    //send response
+     // console.log(req.user);
+        await User.findByIdAndUpdate(req.user._id,{
+            $unset:{
+                refreshToken:1//this willl unset the value refreshToken in user instance
+            }
+        },{
+            new:true// now this will return updated instance 
+        });
+        const options={
+            httpOnly:true,
+            secure:true
+        }
+        return res
+        .status(200)
+        .clearCookie("accessToken",options)
+        .clearCookie("refreshToken",options)
+        .json(
+            new ApiResponse(200,{},"logout successfully")
+        );
+});
