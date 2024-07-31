@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
+import { refreshAccessToken, userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router=Router();
@@ -23,6 +23,6 @@ router.route("/login").post(userLogin);//remember to send data in raw because he
 
 //secured routes
 router.route("/logout").post(verifyJWT,userLogout);
-
+router.route("/refresh-accessToken").post(refreshAccessToken)//this route will help in refreshing the access token without login with the help of refresh token
 
 export default router;
