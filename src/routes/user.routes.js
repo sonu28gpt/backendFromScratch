@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeCurrentPassword, getCurrUser, refreshAccessToken, updateAccountDetail, updateUserAvatar, updateUserCoverImage, userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
+import { changeCurrentPassword, getCurrUser, getUserChannelProfile, getWatchHistory, refreshAccessToken, updateAccountDetail, updateUserAvatar, updateUserCoverImage, userLogin, userLogout, userRegister } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router=Router();
@@ -22,11 +22,27 @@ router.route("/login").post(userLogin);//remember to send data in raw because he
 
 //secured routes
 router.route("/logout").post(verifyJWT,userLogout);
+
+
 router.route("/refresh-accessToken").post(refreshAccessToken)//this route will help in refreshing the access token without login with the help of refresh token
+
+
 router.route("/changePassword").post(verifyJWT,changeCurrentPassword);
+
 router.route("/getCurrUser").get(verifyJWT,getCurrUser);
-router.route("/updateAccountDetail").post(verifyJWT,updateAccountDetail);
-router.route("/updateUserAvatar").post(verifyJWT,upload.single('avatar'),updateUserAvatar);
-router.route("/updateUserCoverImage").post(verifyJWT,upload.single('coverImage'),updateUserCoverImage);
+
+
+router.route("/updateAccountDetail").patch(verifyJWT,updateAccountDetail);
+
+
+router.route("/updateUserAvatar").patch(verifyJWT,upload.single('avatar'),updateUserAvatar);
+
+
+router.route("/updateUserCoverImage").patch(verifyJWT,upload.single('coverImage'),updateUserCoverImage);
+
+
+router.route("/ChannelProfile/:userName").get(verifyJWT,getUserChannelProfile);
+
+router.route("/watchHistory").get(verifyJWT,getWatchHistory);
 
 export default router;

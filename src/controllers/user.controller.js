@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import exp from "constants";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken=async(userId)=>{
         const user=await User.findById(userId);
@@ -309,7 +310,7 @@ export const updateUserCoverImage=asyncHandler(async(req,res)=>{
 
 
 export const getUserChannelProfile=asyncHandler(async(req,res)=>{
-    const userName=req.params;
+    const {userName}=req.params;
     if(!userName?.trim()){
         throw new ApiError(400,"userName is missing");
     }
@@ -374,3 +375,61 @@ export const getUserChannelProfile=asyncHandler(async(req,res)=>{
         new ApiResponse(200,channel[0],"User Channel fetched Successfully")
     )
 });
+
+export const getWatchHistory=asyncHandler(async(req,res)=>{
+    const watchHistory=await User.aggregate([
+        {
+            $match:{
+                _id:mongoose.Schema.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup:{
+                from:"videos",
+                localField:"watchHistory",
+                foreignField:"_id",
+                as:"watchHistory",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from:"users",
+                            localField:"owner",
+                            foreignField:"_id",
+                            as:"owner",
+                            pipeline:[
+                                {
+                                    $addFields:{
+                                        ownerId:"$_id"
+                                    }
+                                },
+                                {
+                                    $project:{
+                                        userName:1,
+                                        fullName:1,
+                                        avatar:1,
+                                        ownerId:1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $first:"$owner"
+                            }
+                        }
+                    }
+                    
+                ]
+            }
+        }
+    ]);
+
+    if(!watchHistory?.length){
+        throw new ApiError(400,"watch History not found");
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200,watchHistory[0],"watch history fetched successfully"));
+})

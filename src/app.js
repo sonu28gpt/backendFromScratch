@@ -18,7 +18,7 @@ app.use(express.static('public'));
 
 
 //importing routes
-import userRoute from "./routes/user.route.js";
+import userRoute from "./routes/user.routes.js";
 import { ApiError } from './utils/ApiError.js';
 
 
