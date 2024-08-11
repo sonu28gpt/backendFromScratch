@@ -29,4 +29,41 @@ const uploadOnCloudinary=async (localFilePath)=>{
 }
 
 
-export {uploadOnCloudinary}
+const getPublicIdfromUrl=(url)=>{
+        const parts=url.split('/');
+        const publicIdWithExtension=parts.slice(-1).join('');
+        const publicId=publicIdWithExtension.split('.')[0];
+        return publicId;
+
+}
+
+const destroyOnCloudinary=async (url)=>{
+    try{
+        if(!url){
+            console.log("please provide url for performing delete operation");
+            return null;
+        }
+        const publicId=getPublicIdfromUrl(url);
+        if(!publicId){
+            console.log('something went wrong while fetching public id from url from',url);
+            return null;
+        }
+
+        await cloudinary.uploader.destroy(publicId, (error, result) => {
+            if (error) {
+              console.log({ message: 'Error deleting image', error });
+            }else{
+                console.log("deletion successfull");
+            }
+           
+          });
+
+
+    }catch(error){
+        console.log("while destroying something went wrong",error);
+        return null;
+    }
+}
+
+
+export {uploadOnCloudinary,destroyOnCloudinary}
