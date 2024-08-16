@@ -18,21 +18,23 @@ app.use(express.static('public'));
 
 
 //importing routes
-import userRoute from "./routes/user.routes.js";
+import userRouter from "./routes/user.routes.js";
 import { ApiError } from './utils/ApiError.js';
+import commentRouter from "./routes/comment.routes.js"
+import dashboardRouter from "./routes/dashboard.routes.js";
+import healthCheckRouter from "./routes/healthCheck.routes.js";
+import likeRouter from "./routes/like.routes.js";
+import playlistRouter from "./routes/playlist.routes.js";
+import subscriptionRouter from "./routes/subscription.routes.js";
 
 
-
-
-
-
-
-
-app.use("/api/v1/user",userRoute);
-
-
-
-
+app.use("/api/v1/user",userRouter);
+app.use("/api/v1/comments",commentRouter);
+app.use('/api/v1/dashboard',dashboardRouter);
+app.use("/api/v1/healthCheck",healthCheckRouter);
+app.use("/api/v1/likes",likeRouter);
+app.use("/api/v1/playlist",playlistRouter);
+app.use("/api/v1/subscriptions",subscriptionRouter);
 
 
 //----------------random page------------------
@@ -45,7 +47,7 @@ app.use((err,req,res,next)=>{
     // console.log("error middleware");
     // console.log(err);
     const {statusCode,message="something went wrong"}=err;
-    res.status(statusCode).json({statusCode,message,errors:err?.errors,data:err?.data,stack:err?.stack});
+    return res.status(statusCode).json({statusCode,message,errors:err?.errors,data:err?.data,stack:err?.stack});
    
 })
 
