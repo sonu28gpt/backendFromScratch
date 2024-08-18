@@ -7,6 +7,7 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import exp from "constants";
 import mongoose from "mongoose";
+import { deleteFile } from "../utils/deleteFile.js";
 
 const generateAccessAndRefreshToken=async(userId)=>{
         const user=await User.findById(userId);
@@ -32,23 +33,26 @@ export const userRegister=asyncHandler(async(req,res)=>{
     if([userName,email,fullName,password].some((field)=>field?.trim()==="")){
         // console.log(req.body);
         if(req.files?.avatar){
-            fs.unlinkSync(req.files?.avatar[0]?.path);
+            deleteFile(req.files?.avatar[0]?.path);
         }
         if(req.files?.coverImage){
-            fs.unwatchFile(req.files?.coverImage[0]?.path);
+            deleteFile(req.files?.coverImage[0]?.path);
         }
         throw new ApiError(400,"all fields are required");
     }
     userName=userName.toLowerCase();
+
     const existedUser= await User.findOne({
-        $or:[{email},{userName}]
-    });
+                                            $or:[{email},{userName}]
+                                        });
+
+
     if(existedUser){
         if(req.files?.avatar){
-            fs.unlinkSync(req.files?.avatar[0]?.path);
+            deleteFile(req.files?.avatar[0]?.path);
         }
         if(req.files?.coverImage){
-            fs.unwatchFile(req.files?.coverImage[0]?.path);
+            deleteFile(req.files?.coverImage[0]?.path);
         }
         throw new ApiError(409,"user already existed");
     }
@@ -58,6 +62,8 @@ export const userRegister=asyncHandler(async(req,res)=>{
     if(req.files.avatar)
     avatarLocalPath=req.files?.avatar[0]?.path;
     else{
+        if(req.files?.coverImage)
+            deleteFile(req.files.coverImage[0].path);
         throw new ApiError(400,"avatar is mandatory");
     }
     // console.log(avatarLocalPath)
@@ -72,10 +78,11 @@ export const userRegister=asyncHandler(async(req,res)=>{
     //     throw new ApiError(400,"avatar is required");
     // }
 
-    const avatar=await uploadOnCloudinary(avatarLocalPath);
-    const coverImage=await uploadOnCloudinary(coverImageLocalPath);
+    const avatar=await uploadOnCloudinary(avatarLocalPath,"MyTubeAvatarImages");
+    const coverImage=await uploadOnCloudinary(coverImageLocalPath,"MyTubeCoverImages");
    
     if(!avatar){
+        
         throw new ApiError(500,"something went wrong from server while uploading file");
     }
     const user=await User.create({
@@ -257,7 +264,7 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"kindly provide avatar");
     }
     const avatarLocalPath=req.file.path;
-    const avatar=await uploadOnCloudinary(avatarLocalPath);
+    const avatar=await uploadOnCloudinary(avatarLocalPath,"MyTubeAvatarImages");
     if(!avatar){
         throw new ApiError(500,"something went wrong during uploading avatar")
     }
@@ -269,7 +276,7 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
     },{
         new:true
     }).select(" -password -refreshToken ");
-    await destroyOnCloudinary(prevAvatarUrl);
+    await destroyOnCloudinary(prevAvatarUrl,"MyTubeAvatarImages");
     return res.status(200).json(
         new ApiResponse(200,user,"avatar updated successfully")
         )
@@ -281,7 +288,7 @@ export const updateUserCoverImage=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"kindly provide coverImage");
     }
     const coverImageLocalPath=req.file.path;
-    const coverImage=await uploadOnCloudinary(coverImageLocalPath);
+    const coverImage=await uploadOnCloudinary(coverImageLocalPath,"MyTubeCoverImages");
     if(!coverImage){
         throw new ApiError(500,"something went wrong during uploading coverImage")
     }
@@ -300,7 +307,7 @@ export const updateUserCoverImage=asyncHandler(async(req,res)=>{
     }).select(" -password -refreshToken ");
     if(prevCoverImageUrl!=null){
 
-        await destroyOnCloudinary(prevCoverImageUrl);
+        await destroyOnCloudinary(prevCoverImageUrl,"MyTubeCoverImages");
     }
 
     return res.status(200).json(

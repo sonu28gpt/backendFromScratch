@@ -38,7 +38,7 @@ export const getVideoComments=asyncHandler(async(req,res)=>{
             page,
             limit,
             customLabels:{
-                toctalDocs:"totalComments",
+                totalDocs:"totalComments",
                 docs:"comments"
             }
         }
