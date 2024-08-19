@@ -6,17 +6,17 @@ const router=Router();
 
 
 router.route("/register").post(upload.fields([
-        {
-            name:"avatar",
-            maxCount:1
-        },
-        {
-            name:"coverImage",
-            maxCount:1
-        }
-    ]),
-    userRegister
-);
+                                {
+                                    name:"avatar",
+                                    maxCount:1
+                                },
+                                {
+                                    name:"coverImage",
+                                    maxCount:1
+                                }
+                            ]),
+                            userRegister
+                        );
 router.route("/login").post(userLogin);//remember to send data in raw because here we are not using upload.field 
 
 
@@ -35,7 +35,7 @@ router.route("/getCurrUser").get(verifyJWT,getCurrUser);
 router.route("/updateAccountDetail").patch(verifyJWT,updateAccountDetail);
 
 
-router.route("/updateUserAvatar").patch(verifyJWT,upload.single('avatar'),updateUserAvatar);
+router.route("/updateUserAvatar").patch(verifyJWT,upload.single('avatar'),updateUserAvatar);//send form data please
 
 
 router.route("/updateUserCoverImage").patch(verifyJWT,upload.single('coverImage'),updateUserCoverImage);

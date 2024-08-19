@@ -181,7 +181,7 @@ export const userLogout=asyncHandler(async(req,res)=>{
 });
 
 export const refreshAccessToken=asyncHandler(async(req,res)=>{//this controller will help in refreshing the access token without login with the help of refresh token
-            const incomingRefreshToken=req.cookie?.refreshToken|| req.body?.refreshToken;
+            const incomingRefreshToken=req.cookies?.refreshToken|| req.body?.refreshToken;
             if(!incomingRefreshToken){
                 throw new ApiError(401,"unauthorized access");
             }
@@ -214,7 +214,7 @@ export const refreshAccessToken=asyncHandler(async(req,res)=>{//this controller 
 
 export const changeCurrentPassword=asyncHandler(async(req,res)=>{
     const {oldPassword,newPassword}=req.body;
-    if(!oldPassword && !newPassword){
+    if(!oldPassword || !newPassword){
         throw new ApiError(400,"please provide old password and new password");
     }
     const user=await User.findById(req.user?._id);
@@ -245,12 +245,17 @@ export const updateAccountDetail=asyncHandler(async(req,res)=>{
     if(!fullName && !email){
         throw new ApiError(400,"please provide details to be updated");
     }
+    const updateQuery={};
+    if(fullName && fullName.trim()!==''){
+        updateQuery.fullName=fullName;
+    }
+    if(email && email.trim()!==''){
+        updateQuery.email=email;
+    }
+    
     const user=await User.findByIdAndUpdate(req.user._id,
         {
-            $set:{
-                email,
-                fullName
-            }
+            $set:updateQuery
         },
     {new:true}).select(" -password -refreshToken");
     return res.status(200).json(
@@ -260,7 +265,7 @@ export const updateAccountDetail=asyncHandler(async(req,res)=>{
 })
 
 export const updateUserAvatar=asyncHandler(async(req,res)=>{
-    if(!req.file.path){
+    if(!req.file?.path){
         throw new ApiError(400,"kindly provide avatar");
     }
     const avatarLocalPath=req.file.path;
@@ -284,7 +289,7 @@ export const updateUserAvatar=asyncHandler(async(req,res)=>{
 
 
 export const updateUserCoverImage=asyncHandler(async(req,res)=>{
-    if(!req.file.path){
+    if(!req.file?.path){
         throw new ApiError(400,"kindly provide coverImage");
     }
     const coverImageLocalPath=req.file.path;
@@ -312,19 +317,21 @@ export const updateUserCoverImage=asyncHandler(async(req,res)=>{
 
     return res.status(200).json(
         new ApiResponse(200,user,"coverImage updated successfully")
-        )
+        );
 });
 
 
 export const getUserChannelProfile=asyncHandler(async(req,res)=>{
-    const {userName}=req.params;
+    let {userName}=req.params;
+
     if(!userName?.trim()){
         throw new ApiError(400,"userName is missing");
     }
+    userName=userName?.toLowerCase().trim();
     const channel =await User.aggregate([
         {
             $match:{
-                userName:userName?.toLowerCase()
+                userName:userName
             }
         },
         {
@@ -351,28 +358,28 @@ export const getUserChannelProfile=asyncHandler(async(req,res)=>{
                 subscribedToCount:{
                                     $size:"$subscribedTo"    
                                 },
-                isSubscirbed:{
+                ...(req.user.userName!==userName?{isSubscirbed:{
                                 $cond:{
                                     if:{$in:[req.user?._id,"$subscribers.subscriber"]},
                                     then:true,
                                     else:false
                                 }
-                            }
+                            }}:{})
             }
         },
         {
             $project:{
+                _id:0,
                 userName:1,
-                email:1,
                 fullName:1,
                 avatar:1,
                 coverImage:1,
                 subscriberCount:1,
                 subscribedToCount:1,
-                isSubscirbed:1
+               ...(req.user.userName!==userName? {isSubscirbed:1}:{})
             }
         }
-    ])
+    ]);
     if(!channel?.length){
         throw new ApiError(404,"channel does not exist");
     }
@@ -380,7 +387,7 @@ export const getUserChannelProfile=asyncHandler(async(req,res)=>{
     .status(200)
     .json(
         new ApiResponse(200,channel[0],"User Channel fetched Successfully")
-    )
+    );
 });
 
 export const getWatchHistory=asyncHandler(async(req,res)=>{
@@ -430,6 +437,11 @@ export const getWatchHistory=asyncHandler(async(req,res)=>{
                     
                 ]
             }
+        },
+        {
+            $project:{
+                watchHistory:1
+            }
         }
     ]);
 
@@ -439,4 +451,4 @@ export const getWatchHistory=asyncHandler(async(req,res)=>{
     return res
     .status(200)
     .json(new ApiResponse(200,watchHistory[0],"watch history fetched successfully"));
-})
+});

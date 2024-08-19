@@ -30,7 +30,7 @@ import tweetRouter from "./routes/tweet.routes.js";
 import videoRouter from "./routes/video.routes.js";
 
 
-app.use("/api/v1/user",userRouter);
+app.use("/api/v1/users",userRouter);
 app.use("/api/v1/comments",commentRouter);
 app.use('/api/v1/dashboard',dashboardRouter);
 app.use("/api/v1/healthCheck",healthCheckRouter);
@@ -49,7 +49,7 @@ app.use('*',(req,res,next)=>{
 app.use((err,req,res,next)=>{
     // console.log("error middleware");
     // console.log(err);
-    const {statusCode,message="something went wrong"}=err;
+    const {statusCode=500,message="something went wrong"}=err;
     return res.status(statusCode).json({statusCode,message,errors:err?.errors,data:err?.data,stack:err?.stack});
    
 })
